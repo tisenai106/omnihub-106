@@ -5,6 +5,8 @@ import { useStore } from '@/store/useStore';
 import { supabase } from '@/lib/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, AlertCircle } from 'lucide-react';
+import SlideRenderer from './player/SlideRenderer';
+import QueueSidebar from './player/QueueSidebar';
 
 interface PlayerViewProps {
     tvId: string;
@@ -91,41 +93,46 @@ export default function PlayerView({ tvId, onReset }: PlayerViewProps) {
     }
 
     const currentSlide = playlist.slides[currentSlideIndex];
+    const isQueueMode = tv.displayMode === 'queue';
 
     return (
         <div className="w-screen h-screen bg-black overflow-hidden flex items-center justify-center">
-            <div
-                style={{
-                    aspectRatio: `${tv.resolution.width}/${tv.resolution.height}`,
-                    width: '100vw',
-                    maxHeight: '100vh',
-                }}
-                className="relative shadow-2xl bg-black"
-            >
-                <AnimatePresence mode="wait">
-                    <motion.div
-                        key={currentSlide.id}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 1 }}
-                        className="absolute inset-0 w-full h-full"
-                    >
-                        {currentSlide.type === 'image' && (
-                            <img
-                                src={currentSlide.url}
-                                alt="Slide"
-                                className="w-full h-full object-cover"
-                            />
-                        )}
-                    </motion.div>
-                </AnimatePresence>
+            {isQueueMode ? (
+                // Queue Mode Layout (Split)
+                <div className="w-full h-full flex">
+                    {/* Main Content Area (75%) */}
+                    <div className="flex-1 relative bg-black border-r border-zinc-800">
+                        <SlideRenderer slide={currentSlide} />
 
-                {/* Optional Debug Overlay */}
-                <div className="absolute bottom-4 right-4 bg-black/50 text-white text-xs px-2 py-1 rounded backdrop-blur-md opacity-20 hover:opacity-100 transition-opacity">
-                    {tv.name} • Slide {currentSlideIndex + 1}/{playlist.slides.length}
+                        {/* Overlay Info */}
+                        <div className="absolute bottom-4 left-4 bg-black/50 text-white text-xs px-2 py-1 rounded backdrop-blur-md opacity-20 hover:opacity-100 transition-opacity">
+                            {tv.name} • {tv.resolution.width}x{tv.resolution.height}
+                        </div>
+                    </div>
+
+                    {/* Sidebar (25%) */}
+                    <div className="w-[25%] max-w-sm h-full">
+                        <QueueSidebar />
+                    </div>
                 </div>
-            </div>
+            ) : (
+                // Standard Playlist Mode
+                <div
+                    style={{
+                        aspectRatio: `${tv.resolution.width}/${tv.resolution.height}`,
+                        width: '100vw',
+                        maxHeight: '100vh',
+                    }}
+                    className="relative shadow-2xl bg-black"
+                >
+                    <SlideRenderer slide={currentSlide} />
+
+                    {/* Optional Debug Overlay */}
+                    <div className="absolute bottom-4 right-4 bg-black/50 text-white text-xs px-2 py-1 rounded backdrop-blur-md opacity-20 hover:opacity-100 transition-opacity">
+                        {tv.name} • Slide {currentSlideIndex + 1}/{playlist.slides.length}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

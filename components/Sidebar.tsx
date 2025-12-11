@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Monitor, ListVideo, Settings, Users, LogOut } from 'lucide-react';
+import { LayoutDashboard, Monitor, ListVideo, Settings, Users, LogOut, Ticket } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { clsx } from 'clsx';
 import { supabase } from '@/lib/supabase';
@@ -12,6 +12,7 @@ const baseMenuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', href: '/admin' },
     { icon: Monitor, label: 'TV Management', href: '/admin/tvs' },
     { icon: ListVideo, label: 'Playlists', href: '/admin/playlists' },
+    { icon: Ticket, label: 'Queue', href: '/admin/queue' },
 ];
 
 export default function Sidebar() {

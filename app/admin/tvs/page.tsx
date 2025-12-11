@@ -93,7 +93,7 @@ export default function TVManagementPage() {
                                             <Badge>{tv.orientation}</Badge>
                                         </div>
 
-                                        <div className="relative w-full">
+                                        <div className="relative w-full mb-3">
                                             <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
                                                 <PlayCircle size={18} className="text-blue-400" />
                                             </div>
@@ -111,6 +111,25 @@ export default function TVManagementPage() {
                                                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                     <path d="M2 4L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                                 </svg>
+                                            </div>
+                                        </div>
+
+                                        {/* Display Mode Selector */}
+                                        <div className="flex items-center justify-between bg-white/5 rounded-lg p-2 border border-white/5">
+                                            <span className="text-xs text-zinc-500 font-medium px-2">MODE</span>
+                                            <div className="flex gap-1">
+                                                <button
+                                                    onClick={() => useStore.getState().updateTV(tv.id, { displayMode: 'playlist' })}
+                                                    className={`px-3 py-1.5 text-xs rounded-md transition-all ${tv.displayMode === 'playlist' || !tv.displayMode ? 'bg-blue-600 text-white' : 'text-zinc-400 hover:text-white'}`}
+                                                >
+                                                    Playlist
+                                                </button>
+                                                <button
+                                                    onClick={() => useStore.getState().updateTV(tv.id, { displayMode: 'queue' })}
+                                                    className={`px-3 py-1.5 text-xs rounded-md transition-all ${tv.displayMode === 'queue' ? 'bg-purple-600 text-white' : 'text-zinc-400 hover:text-white'}`}
+                                                >
+                                                    Queue
+                                                </button>
                                             </div>
                                         </div>
                                     </div>

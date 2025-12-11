@@ -1,4 +1,5 @@
 export type Orientation = 'landscape' | 'portrait';
+export type DisplayMode = 'playlist' | 'queue';
 
 export interface TV {
     id: string;
@@ -9,6 +10,7 @@ export interface TV {
         height: number;
     };
     orientation: Orientation;
+    displayMode: DisplayMode;
     assignedPlaylistId: string | null;
 }
 
@@ -26,4 +28,14 @@ export interface Playlist {
     id: string;
     name: string;
     slides: Slide[];
+}
+
+export type TicketStatus = 'waiting' | 'called' | 'completed';
+
+export interface Ticket {
+    id: string;
+    number: string;
+    status: TicketStatus;
+    created_at: string;
+    called_at?: string;
 }
