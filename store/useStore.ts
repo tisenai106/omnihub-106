@@ -1,17 +1,19 @@
 import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
-import { TV, Playlist, Slide, Ticket } from '../types';
+import { TV, Playlist, Slide, Ticket, ServiceType, Attendant } from '../types';
 
 interface AppState {
     tvs: TV[];
     playlists: Playlist[];
     tickets: Ticket[];
+    serviceTypes: ServiceType[];
+    attendants: Attendant[];
     isLoading: boolean;
 
     // Actions
     fetchData: () => Promise<void>;
 
-    addTV: (tv: Omit<TV, 'id' | 'displayMode'>) => Promise<void>; // Default playlist mode
+    addTV: (tv: Omit<TV, 'id' | 'displayMode'>) => Promise<void>;
     updateTV: (id: string, updates: Partial<TV>) => Promise<void>;
     removeTV: (id: string) => Promise<void>;
 
@@ -25,48 +27,43 @@ interface AppState {
 
     // Queue Actions
     createTicket: () => Promise<Ticket | null>;
-    callTicket: (ticketId: string) => Promise<void>;
+    callTicket: (ticketId: string, attendantId: string) => Promise<void>;
     completeTicket: (ticketId: string) => Promise<void>;
+
+    // Settings Actions
+    addServiceType: (name: string) => Promise<void>;
+    removeServiceType: (id: string) => Promise<void>;
+    addAttendant: (name: string, desk?: string) => Promise<void>;
+    removeAttendant: (id: string) => Promise<void>;
 }
 
 export const useStore = create<AppState>((set, get) => ({
     tvs: [],
     playlists: [],
     tickets: [],
+    serviceTypes: [],
+    attendants: [],
     isLoading: false,
 
     fetchData: async () => {
         set({ isLoading: true });
 
-        // Fetch TVs
-        const { data: tvsData } = await supabase
-            .from('tvs')
-            .select('*')
-            .order('created_at', { ascending: true });
+        // Parallel fetching
+        const [tvsReq, plReq, ticketsReq, servicesReq, attendantsReq] = await Promise.all([
+            supabase.from('tvs').select('*').order('created_at', { ascending: true }),
+            supabase.from('playlists').select('*, slides(*)').order('created_at', { ascending: true }),
+            supabase.from('tickets').select('*').neq('status', 'completed').order('created_at', { ascending: true }),
+            supabase.from('service_types').select('*').order('created_at'),
+            supabase.from('attendants').select('*').order('created_at')
+        ]);
 
-        // Fetch Playlists with Slides
-        const { data: playlistsData } = await supabase
-            .from('playlists')
-            .select('*, slides(*)')
-            .order('created_at', { ascending: true });
-
-        // Fetch Tickets (only active ones: waiting or called recently)
-        // For simplicity fetching all 'waiting' and 'called', maybe limit 'completed'
-        const { data: ticketsData } = await supabase
-            .from('tickets')
-            .select('*')
-            .neq('status', 'completed') // Just keep active queue for now
-            .order('created_at', { ascending: true });
-
-        // Check for error logging if needed, but keeping simple
-
-        // Transform DB data to match types
-        const formattedPlaylists: Playlist[] = (playlistsData || []).map((pl: any) => ({
+        // Transform Data
+        const formattedPlaylists: Playlist[] = (plReq.data || []).map((pl: any) => ({
             ...pl,
             slides: (pl.slides || []).sort((a: any, b: any) => a.order - b.order)
         }));
 
-        const formattedTVs: TV[] = (tvsData || []).map((tv: any) => ({
+        const formattedTVs: TV[] = (tvsReq.data || []).map((tv: any) => ({
             id: tv.id,
             name: tv.name,
             location: tv.location,
@@ -76,14 +73,16 @@ export const useStore = create<AppState>((set, get) => ({
             assignedPlaylistId: tv.assigned_playlist_id
         }));
 
-        const formattedTickets: Ticket[] = (ticketsData || []).map((t: any) => ({
-            ...t
-        }));
+        const formattedTickets: Ticket[] = (ticketsReq.data || []).map((t: any) => ({ ...t }));
+        const formattedServices: ServiceType[] = (servicesReq.data || []).map((s: any) => ({ ...s }));
+        const formattedAttendants: Attendant[] = (attendantsReq.data || []).map((a: any) => ({ ...a }));
 
         set({
             tvs: formattedTVs,
             playlists: formattedPlaylists,
             tickets: formattedTickets,
+            serviceTypes: formattedServices,
+            attendants: formattedAttendants,
             isLoading: false
         });
     },
@@ -95,12 +94,10 @@ export const useStore = create<AppState>((set, get) => ({
             width: tv.resolution.width,
             height: tv.resolution.height,
             orientation: tv.orientation,
-            display_mode: 'playlist' // Default
+            display_mode: 'playlist'
         }).select();
 
-        if (data && !error) {
-            await get().fetchData();
-        }
+        if (data && !error) await get().fetchData();
     },
 
     updateTV: async (id, updates) => {
@@ -134,13 +131,7 @@ export const useStore = create<AppState>((set, get) => ({
     addSlide: async (playlistId, url, duration) => {
         const playlist = get().playlists.find(p => p.id === playlistId);
         const order = playlist ? playlist.slides.length : 0;
-
-        await supabase.from('slides').insert({
-            playlist_id: playlistId,
-            url,
-            duration,
-            order
-        });
+        await supabase.from('slides').insert({ playlist_id: playlistId, url, duration, order });
         await get().fetchData();
     },
 
@@ -155,16 +146,8 @@ export const useStore = create<AppState>((set, get) => ({
     },
 
     createTicket: async () => {
-        // Simple incremental number logic could be better (e.g. daily sequence), 
-        // but for now relying on a simple random format or counting?
-        // Let's do a simple count of tickets created today to generate number
-
-        // Actually, just fetching count of tickets today
         const today = new Date().toISOString().split('T')[0];
-        const { count } = await supabase
-            .from('tickets')
-            .select('*', { count: 'exact', head: true })
-            .gte('created_at', today);
+        const { count } = await supabase.from('tickets').select('*', { count: 'exact', head: true }).gte('created_at', today);
 
         const nextNum = (count || 0) + 1;
         const numberStr = `#${String(nextNum).padStart(3, '0')}`;
@@ -174,25 +157,45 @@ export const useStore = create<AppState>((set, get) => ({
             status: 'waiting'
         }).select().single();
 
-        if (error) {
-            console.error('Error creating ticket', error);
-            return null;
+        if (error) console.error('Error creating ticket', error);
+        else {
+            await get().fetchData();
+            return data as Ticket;
         }
-
-        await get().fetchData();
-        return data as Ticket;
+        return null;
     },
 
-    callTicket: async (ticketId) => {
+    callTicket: async (ticketId, attendantId) => {
         await supabase.from('tickets').update({
             status: 'called',
-            called_at: new Date().toISOString()
+            called_at: new Date().toISOString(),
+            attendant_id: attendantId
         }).eq('id', ticketId);
         await get().fetchData();
     },
 
     completeTicket: async (ticketId) => {
         await supabase.from('tickets').update({ status: 'completed' }).eq('id', ticketId);
+        await get().fetchData();
+    },
+
+    addServiceType: async (name) => {
+        await supabase.from('service_types').insert({ name });
+        await get().fetchData();
+    },
+
+    removeServiceType: async (id) => {
+        await supabase.from('service_types').delete().eq('id', id);
+        await get().fetchData();
+    },
+
+    addAttendant: async (name, desk) => {
+        await supabase.from('attendants').insert({ name, desk_number: desk });
+        await get().fetchData();
+    },
+
+    removeAttendant: async (id) => {
+        await supabase.from('attendants').delete().eq('id', id);
         await get().fetchData();
     }
 }));

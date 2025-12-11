@@ -38,4 +38,17 @@ export interface Ticket {
     status: TicketStatus;
     created_at: string;
     called_at?: string;
+    attendant_id?: string;
+    service_type_id?: string;
+}
+
+export interface ServiceType {
+    id: string;
+    name: string;
+}
+
+export interface Attendant {
+    id: string;
+    name: string;
+    desk_number?: string;
 }

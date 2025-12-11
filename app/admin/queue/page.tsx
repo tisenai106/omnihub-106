@@ -1,17 +1,20 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useStore } from '@/store/useStore';
 import { supabase } from '@/lib/supabase';
-import { Ticket, Users, Megaphone, CheckCircle } from 'lucide-react';
+import { Ticket, Users, Megaphone, CheckCircle, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function QueueAdminPage() {
-    const { tickets, fetchData, callTicket, completeTicket } = useStore();
+    const { tickets, attendants, fetchData, callTicket, completeTicket } = useStore();
+    const [selectedAttendantId, setSelectedAttendantId] = useState<string>('');
 
     useEffect(() => {
         fetchData();
-        // Subscribe to changes
+        const savedAttendant = localStorage.getItem('tv_senai_attendant_id');
+        if (savedAttendant) setSelectedAttendantId(savedAttendant);
+
         const channel = supabase
             .channel('queue_admin_changes')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, () => {
@@ -24,15 +27,22 @@ export default function QueueAdminPage() {
         };
     }, []);
 
+    const handleSelectAttendant = (id: string) => {
+        setSelectedAttendantId(id);
+        localStorage.setItem('tv_senai_attendant_id', id);
+    };
+
     const waitingTickets = tickets.filter(t => t.status === 'waiting');
     const calledTickets = tickets.filter(t => t.status === 'called').sort((a, b) => new Date(b.called_at!).getTime() - new Date(a.called_at!).getTime());
     const currentTicket = calledTickets[0]; // Most recently called
     const historyTickets = calledTickets.slice(1);
 
     const handleCallNext = async () => {
-        if (waitingTickets.length > 0) {
+        if (waitingTickets.length > 0 && selectedAttendantId) {
             const next = waitingTickets[0];
-            await callTicket(next.id);
+            await callTicket(next.id, selectedAttendantId);
+        } else if (!selectedAttendantId) {
+            alert('Por favor, selecione seu guichê/mesa antes de chamar.');
         }
     };
 
@@ -44,6 +54,22 @@ export default function QueueAdminPage() {
                         Gerenciamento de Fila
                     </h1>
                     <p className="text-zinc-400">Controle de senhas e chamadas</p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <select
+                        value={selectedAttendantId}
+                        onChange={(e) => handleSelectAttendant(e.target.value)}
+                        className="bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-zinc-300 outline-none focus:border-blue-500"
+                    >
+                        <option value="">Selecione seu Guichê</option>
+                        {attendants.map(a => (
+                            <option key={a.id} value={a.id}>{a.name} {a.desk_number ? `(${a.desk_number})` : ''}</option>
+                        ))}
+                    </select>
+                    <a href="/admin/queue/settings" className="text-zinc-500 hover:text-white p-2 transition-colors" title="Configurações">
+                        <Settings size={20} />
+                    </a>
                 </div>
             </header>
 
@@ -71,10 +97,10 @@ export default function QueueAdminPage() {
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={handleCallNext}
-                                disabled={waitingTickets.length === 0}
-                                className={`px-8 py-4 rounded-xl font-bold text-lg flex items-center gap-3 transition-all ${waitingTickets.length > 0
-                                        ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/20'
-                                        : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
+                                disabled={waitingTickets.length === 0 || !selectedAttendantId}
+                                className={`px-8 py-4 rounded-xl font-bold text-lg flex items-center gap-3 transition-all ${waitingTickets.length > 0 && selectedAttendantId
+                                    ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/20'
+                                    : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
                                     }`}
                             >
                                 <Megaphone size={24} />
