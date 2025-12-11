@@ -1,12 +1,17 @@
+import { createBrowserClient } from '@supabase/ssr';
 
-import { createClient } from '@supabase/supabase-js';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
-
-// Prevent crash during build or if envs are missing
-if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-    console.warn('Missing NEXT_PUBLIC_SUPABASE_URL. Check .env.local');
+if (!supabaseUrl || !supabaseKey) {
+    if (typeof window !== "undefined") {
+        console.warn("Supabase credentials missing! Please check .env.local");
+    }
 }
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+// Use createBrowserClient for Client Components to ensure cookies are handled correctly
+// across client/server boundary (Middleware).
+export const supabase = createBrowserClient(
+    supabaseUrl || 'https://placeholder.supabase.co',
+    supabaseKey || 'placeholder-key'
+);
