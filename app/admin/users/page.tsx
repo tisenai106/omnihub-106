@@ -6,14 +6,27 @@ import { createUser } from '@/actions/createUser';
 import { deleteUser, updateUser } from '@/actions/manageUser';
 import { Users, UserPlus, Shield, ShieldAlert, Mail, Trash2, Edit2, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import GlassCard from '@/components/ui/GlassCard';
 import GlowButton from '@/components/ui/GlowButton';
+import { AlertModal, ConfirmModal } from '@/components/ui/Modal';
+import GlassCard from '@/components/ui/GlassCard';
 
 export default function UsersPage() {
     const [users, setUsers] = useState<any[]>([]);
     const [isAdding, setIsAdding] = useState(false);
     const [editingUser, setEditingUser] = useState<any | null>(null);
     const [loading, setLoading] = useState(false);
+
+    // Modal States
+    const [alertState, setAlertState] = useState<{ open: boolean, title: string, message: string, type: 'success' | 'danger' | 'default' }>({ open: false, title: '', message: '', type: 'default' });
+    const [confirmState, setConfirmState] = useState<{ open: boolean, title: string, message: string, onConfirm: () => void }>({ open: false, title: '', message: '', onConfirm: () => { } });
+
+    const showAlert = (title: string, message: string, type: 'success' | 'danger' | 'default' = 'default') => {
+        setAlertState({ open: true, title, message, type });
+    };
+
+    const showConfirm = (title: string, message: string, onConfirm: () => void) => {
+        setConfirmState({ open: true, title, message, onConfirm });
+    };
 
     const fetchUsers = async () => {
         const { data } = await supabase.from('profiles').select('*').order('created_at');
@@ -30,17 +43,11 @@ export default function UsersPage() {
         const formData = new FormData(e.currentTarget);
         const res = await createUser(formData);
         if (res.success) {
-            // Also update the profile with name/desk right after if needed, 
-            // but createUser currently only handles Auth. 
-            // We might need to update the profile separately or update createUser. 
-            // For now, let's assume createUser makes the profile, and we Edit to add details.
-            // Or better: Update createUser to accept metadata?
-            // Simpler: Just refresh, then User can Edit.
-            alert('User created successfully. You can now edit details.');
+            showAlert('Success', 'User created successfully.', 'success');
             setIsAdding(false);
             fetchUsers();
         } else {
-            alert('Error: ' + res.error);
+            showAlert('Error', 'Failed to create user: ' + res.error, 'danger');
         }
         setLoading(false);
     };
@@ -59,23 +66,29 @@ export default function UsersPage() {
 
         const res = await updateUser(editingUser.id, updates);
         if (res.success) {
-            alert('User updated!');
+            showAlert('Success', 'User updated successfully!', 'success');
             setEditingUser(null);
             fetchUsers();
         } else {
-            alert('Error updating: ' + res.error);
+            showAlert('Error', 'Failed to update user: ' + res.error, 'danger');
         }
         setLoading(false);
     };
 
     const handleDeleteUser = async (user: any) => {
-        if (!confirm(`Are you sure you want to delete ${user.email}? This cannot be undone.`)) return;
-        const res = await deleteUser(user.id);
-        if (res.success) {
-            fetchUsers();
-        } else {
-            alert('Error deleting: ' + res.error);
-        }
+        showConfirm(
+            'Delete User',
+            `Are you sure you want to delete ${user.email}? This action cannot be undone.`,
+            async () => {
+                const res = await deleteUser(user.id);
+                if (res.success) {
+                    showAlert('Deleted', 'User deleted successfully.', 'success');
+                    fetchUsers();
+                } else {
+                    showAlert('Error', 'Failed to delete user: ' + res.error, 'danger');
+                }
+            }
+        );
     };
 
     return (
@@ -89,6 +102,22 @@ export default function UsersPage() {
                     Add User
                 </GlowButton>
             </div>
+
+            {/* Modals */}
+            <AlertModal
+                isOpen={alertState.open}
+                onClose={() => setAlertState(prev => ({ ...prev, open: false }))}
+                title={alertState.title}
+                message={alertState.message}
+                type={alertState.type}
+            />
+            <ConfirmModal
+                isOpen={confirmState.open}
+                onClose={() => setConfirmState(prev => ({ ...prev, open: false }))}
+                onConfirm={confirmState.onConfirm}
+                title={confirmState.title}
+                message={confirmState.message}
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {users.map((user) => (
@@ -203,7 +232,16 @@ export default function UsersPage() {
 
                                 <form onSubmit={handleUpdateUser} className="space-y-4">
                                     <div>
-                                        <label className="block text-xs font-medium text-zinc-400 mb-1.5 uppercase tracking-wide">Name</label>
+                                        <label className="block text-xs font-medium text-zinc-400 mb-1.5 uppercase tracking-wide">Email</label>
+                                        <input
+                                            type="text"
+                                            value={editingUser.email}
+                                            disabled
+                                            className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-2.5 text-zinc-400 outline-none cursor-not-allowed"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-zinc-400 mb-1.5 uppercase tracking-wide">Name / Nome</label>
                                         <input
                                             name="name"
                                             type="text"

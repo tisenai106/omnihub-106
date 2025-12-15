@@ -56,8 +56,9 @@ export default function Sidebar() {
             { icon: History, label: 'History', href: '/admin/history' }
         ];
     } else if (role === 'attendant') {
-        // Attendant only sees Queue
+        // Attendant sees Dashboard and Queue
         menuItems = [
+            { icon: LayoutDashboard, label: 'Dashboard', href: '/admin' },
             { icon: Ticket, label: 'Queue', href: '/admin/queue' }
         ];
     }
