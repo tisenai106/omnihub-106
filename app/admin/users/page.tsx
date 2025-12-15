@@ -158,9 +158,18 @@ export default function UsersPage() {
                                         <input name="password" type="password" required className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:ring-2 focus:ring-blue-500/50" placeholder="••••••••" />
                                     </div>
                                     <div>
+                                        <label className="block text-xs font-medium text-zinc-400 mb-1.5 uppercase tracking-wide">Name / Nome</label>
+                                        <input name="name" type="text" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:ring-2 focus:ring-blue-500/50" placeholder="Ex: João Silva" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-zinc-400 mb-1.5 uppercase tracking-wide">Desk / Guichê</label>
+                                        <input name="desk_info" type="text" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:ring-2 focus:ring-blue-500/50" placeholder="Ex: Guichê 05" />
+                                    </div>
+                                    <div>
                                         <label className="block text-xs font-medium text-zinc-400 mb-1.5 uppercase tracking-wide">Role</label>
                                         <select name="role" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:ring-2 focus:ring-blue-500/50 appearance-none">
                                             <option value="editor" className="bg-zinc-900">Editor</option>
+                                            <option value="attendant" className="bg-zinc-900">Attendant / Atendente</option>
                                             <option value="super_admin" className="bg-zinc-900">Super Admin</option>
                                         </select>
                                     </div>
@@ -221,6 +230,7 @@ export default function UsersPage() {
                                             className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:ring-2 focus:ring-blue-500/50 appearance-none"
                                         >
                                             <option value="editor" className="bg-zinc-900">Editor</option>
+                                            <option value="attendant" className="bg-zinc-900">Attendant / Atendente</option>
                                             <option value="super_admin" className="bg-zinc-900">Super Admin</option>
                                         </select>
                                     </div>

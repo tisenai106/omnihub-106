@@ -26,6 +26,8 @@ export async function createUser(formData: FormData) {
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
     const role = formData.get('role') as string;
+    const name = formData.get('name') as string;
+    const deskInfo = formData.get('desk_info') as string;
 
     try {
         // 1. Create Auth User
@@ -33,15 +35,20 @@ export async function createUser(formData: FormData) {
             email: email,
             password: password,
             email_confirm: true,
+            user_metadata: { name: name } // Optional: also save to auth metadata
         });
 
         if (userError) throw userError;
 
-        // 2. Update Profile with Role
+        // 2. Update Profile with Role and Details
         if (userData.user) {
             const { error: profileError } = await supabaseAdmin
                 .from('profiles')
-                .update({ role: role })
+                .update({
+                    role: role,
+                    name: name,
+                    desk_info: deskInfo
+                })
                 .eq('id', userData.user.id);
 
             if (profileError) throw profileError;

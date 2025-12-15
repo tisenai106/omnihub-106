@@ -2,7 +2,7 @@
 create table profiles (
   id uuid references auth.users not null primary key,
   email text,
-  role text check (role in ('super_admin', 'editor')) default 'editor',
+  role text check (role in ('super_admin', 'editor', 'attendant')) default 'editor',
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 

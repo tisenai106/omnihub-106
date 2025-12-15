@@ -39,7 +39,7 @@ export interface Profile {
     email?: string;
     name?: string;
     desk_info?: string;
-    role: 'super_admin' | 'editor' | 'viewer';
+    role: 'super_admin' | 'editor' | 'viewer' | 'attendant';
 }
 
 export interface ServiceType {

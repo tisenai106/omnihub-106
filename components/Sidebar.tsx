@@ -46,14 +46,21 @@ export default function Sidebar() {
         router.push('/login');
     };
 
-    const menuItems = role === 'super_admin'
-        ? [
+    let menuItems = baseMenuItems;
+
+    if (role === 'super_admin') {
+        menuItems = [
             ...baseMenuItems,
             { icon: Users, label: 'Users', href: '/admin/users' },
             { icon: Settings, label: 'Service Types', href: '/admin/queue/settings' },
             { icon: History, label: 'History', href: '/admin/history' }
-        ]
-        : baseMenuItems;
+        ];
+    } else if (role === 'attendant') {
+        // Attendant only sees Queue
+        menuItems = [
+            { icon: Ticket, label: 'Queue', href: '/admin/queue' }
+        ];
+    }
 
     return (
         <aside className="fixed left-4 top-4 bottom-4 w-72 glass-panel rounded-3xl flex flex-col p-6 z-50">

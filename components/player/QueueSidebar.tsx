@@ -11,7 +11,7 @@ export default function QueueSidebar() {
 
     // Sort logic
     const calledTickets = tickets
-        .filter(t => t.status === 'called')
+        .filter(t => t.status === 'called' || t.status === 'completed')
         .sort((a, b) => new Date(b.called_at!).getTime() - new Date(a.called_at!).getTime());
 
     const currentTicket = calledTickets[0];

@@ -34,9 +34,14 @@ export default function QueueAdminPage() {
     }, []);
 
     const waitingTickets = tickets.filter(t => t.status === 'waiting');
-    const calledTickets = tickets.filter(t => t.status === 'called').sort((a, b) => new Date(b.called_at!).getTime() - new Date(a.called_at!).getTime());
-    const currentTicket = calledTickets[0]; // Most recently called
-    const historyTickets = calledTickets.slice(1);
+
+    // Filter tickets to only show those called or completed (for history)
+    const allCalledTickets = tickets
+        .filter(t => t.status === 'called' || t.status === 'completed')
+        .sort((a, b) => new Date(b.called_at!).getTime() - new Date(a.called_at!).getTime());
+
+    const currentTicket = allCalledTickets.find(t => t.status === 'called' && currentUser && t.attendant_user_id === currentUser.id);
+    const historyTickets = allCalledTickets.filter(t => t.id !== currentTicket?.id).slice(0, 5);
 
     const handleCallNext = async () => {
         if (waitingTickets.length > 0) {
@@ -135,8 +140,8 @@ export default function QueueAdminPage() {
                                             onClick={handleFinish}
                                             disabled={!selectedServiceId}
                                             className={`w-full px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${selectedServiceId
-                                                    ? 'bg-green-600 hover:bg-green-500 text-white shadow-lg shadow-green-600/20'
-                                                    : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
+                                                ? 'bg-green-600 hover:bg-green-500 text-white shadow-lg shadow-green-600/20'
+                                                : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
                                                 }`}
                                         >
                                             <CheckCircle size={20} />
