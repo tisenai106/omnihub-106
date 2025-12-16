@@ -61,7 +61,7 @@ export default function QueueSidebar() {
             <div className="p-6 border-b border-zinc-800 bg-black/20 flex flex-col items-center text-center">
                 <div className="bg-white p-2 rounded-xl mb-3 shadow-[0_0_20px_rgba(37,99,235,0.3)]">
                     <img
-                        src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent('https://tv-senai.vercel.app/queue')}`}
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent('https://omnihub-106.vercel.app/queue')}`}
                         alt="Join Queue"
                         className="w-32 h-32"
                     />
