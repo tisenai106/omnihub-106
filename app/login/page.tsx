@@ -89,7 +89,7 @@ export default function LoginPage() {
                             </div>
                         </div>
 
-                        <GlowButton type="button" onClick={handleLogin} isLoading={loading} className="w-full">
+                        <GlowButton type="submit" isLoading={loading} className="w-full">
                             Sign In
                         </GlowButton>
                     </form>
