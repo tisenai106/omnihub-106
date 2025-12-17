@@ -111,7 +111,7 @@ export default function PlayerView({ tvId, onReset }: PlayerViewProps) {
                     </div>
 
                     {/* Sidebar (25%) */}
-                    <div className="w-[25%] max-w-sm h-full">
+                    <div className="w-[25%] h-full" style={{ containerType: 'size' }}>
                         <QueueSidebar />
                     </div>
                 </div>
@@ -133,7 +133,7 @@ export default function PlayerView({ tvId, onReset }: PlayerViewProps) {
                 </div>
             )}
 
-            {/* Spotify Embed Overlay */}
+            {/* Spotify Embed Overlay
             {tv.spotifyId && (
                 <div className="absolute bottom-4 left-4 z-50">
                     <iframe
@@ -147,7 +147,7 @@ export default function PlayerView({ tvId, onReset }: PlayerViewProps) {
                         loading="lazy"
                     />
                 </div>
-            )}
+            )} */}
         </div>
     );
 }

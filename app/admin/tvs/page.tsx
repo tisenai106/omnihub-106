@@ -26,6 +26,14 @@ export default function TVManagementPage() {
     const [newSpotifyId, setNewSpotifyId] = useState('');
     const [newOrientation, setNewOrientation] = useState<Orientation>('landscape');
 
+    const TV_PRESETS = [
+        { inches: 43, label: '43"', desc: 'Compact' },
+        { inches: 50, label: '50"', desc: 'Standard' },
+        { inches: 55, label: '55"', desc: 'Large' },
+        { inches: 65, label: '65"', desc: 'Hall' },
+        { inches: 75, label: '75"', desc: 'Auditorium' },
+    ];
+
     const calculateDimensions = (inches: number, orientation: Orientation) => {
         // 16:9 Aspect Ratio
         // Angle = 29.36 degrees
@@ -242,8 +250,27 @@ export default function TVManagementPage() {
                                     <InputGroup label="Location" value={newLocation} onChange={setNewLocation} placeholder="Floor 1" />
 
 
-
-                                    <InputGroup label="Size (Inches)" type="number" value={newSizeInches || ''} onChange={setNewSizeInches} placeholder="e.g. 55" />
+                                    {/* Size Selection (Presets) */}
+                                    <div>
+                                        <label className="block text-xs font-medium text-zinc-400 mb-2 uppercase tracking-wide">Display Model (Size)</label>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {TV_PRESETS.map((preset) => (
+                                                <div
+                                                    key={preset.inches}
+                                                    onClick={() => setNewSizeInches(preset.inches)}
+                                                    className={`
+                                                        cursor-pointer px-3 py-2 rounded-xl border flex flex-col items-center justify-center gap-1 transition-all text-center
+                                                        ${newSizeInches === preset.inches
+                                                            ? 'bg-blue-600/20 border-blue-500 text-blue-400'
+                                                            : 'bg-white/5 border-white/5 text-zinc-400 hover:bg-white/10'}
+                                                    `}
+                                                >
+                                                    <span className="text-sm font-bold">{preset.label}</span>
+                                                    <span className="text-[10px] opacity-60">{preset.desc}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
 
                                     <InputGroup label="Spotify Playlist ID" value={newSpotifyId} onChange={setNewSpotifyId} placeholder="e.g. 37i9dQZF1DXcBWIGoYBM5M" />
 
