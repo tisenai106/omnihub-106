@@ -24,13 +24,36 @@ export default function TVManagementPage() {
     const [newSizeInches, setNewSizeInches] = useState<number | undefined>(undefined);
     const [newOrientation, setNewOrientation] = useState<Orientation>('landscape');
 
+    const calculateDimensions = (inches: number, orientation: Orientation) => {
+        // 16:9 Aspect Ratio
+        // Angle = 29.36 degrees
+        // Width factor = cos(29.36) = 0.87157
+        // Height factor = sin(29.36) = 0.4900
+        const widthInches = inches * 0.87157;
+        const heightInches = inches * 0.4900;
+
+        const widthMm = Math.round(widthInches * 25.4);
+        const heightMm = Math.round(heightInches * 25.4);
+
+        if (orientation === 'landscape') {
+            return { width: widthMm, height: heightMm };
+        } else {
+            return { width: heightMm, height: widthMm };
+        }
+    };
+
     const handleAddTV = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Default to 55 if not provided (though input makes it required-ish)
+        const inches = newSizeInches || 55;
+        const dimensions = calculateDimensions(inches, newOrientation);
+
         const newTV = {
             name: newName,
             location: newLocation,
 
-            resolution: newOrientation === 'landscape' ? { width: 1920, height: 1080 } : { width: 1080, height: 1920 },
+            resolution: dimensions,
             orientation: newOrientation,
 
             assignedPlaylistId: null,
