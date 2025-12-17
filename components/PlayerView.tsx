@@ -127,10 +127,25 @@ export default function PlayerView({ tvId, onReset }: PlayerViewProps) {
                 >
                     <SlideRenderer slide={currentSlide} />
 
-                    {/* Optional Debug Overlay */}
                     <div className="absolute bottom-4 right-4 bg-black/50 text-white text-xs px-2 py-1 rounded backdrop-blur-md opacity-20 hover:opacity-100 transition-opacity">
                         {tv.name} • Slide {currentSlideIndex + 1}/{playlist.slides.length}
                     </div>
+                </div>
+            )}
+
+            {/* Spotify Embed Overlay */}
+            {tv.spotifyId && (
+                <div className="absolute bottom-4 left-4 z-50">
+                    <iframe
+                        style={{ borderRadius: '12px' }}
+                        src={`https://open.spotify.com/embed/playlist/${tv.spotifyId}?utm_source=generator&theme=0`}
+                        width="300"
+                        height="80"
+                        frameBorder="0"
+                        allowFullScreen
+                        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                        loading="lazy"
+                    />
                 </div>
             )}
         </div>

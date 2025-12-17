@@ -74,7 +74,8 @@ export const useStore = create<AppState>((set, get) => ({
             orientation: tv.orientation,
             displayMode: tv.display_mode || 'playlist',
             assignedPlaylistId: tv.assigned_playlist_id,
-            size_inches: tv.size_inches
+            size_inches: tv.size_inches,
+            spotifyId: tv.spotify_id
         }));
 
         const formattedTickets: Ticket[] = (ticketsReq.data || []).map((t: any) => ({ ...t }));
@@ -101,7 +102,8 @@ export const useStore = create<AppState>((set, get) => ({
             height: tv.resolution.height,
             orientation: tv.orientation,
             display_mode: 'playlist',
-            size_inches: tv.size_inches
+            size_inches: tv.size_inches,
+            spotify_id: tv.spotifyId
         }).select();
 
         if (data && !error) await get().fetchData();
@@ -114,6 +116,16 @@ export const useStore = create<AppState>((set, get) => ({
         if (updates.assignedPlaylistId !== undefined) {
             dbUpdates.assigned_playlist_id = updates.assignedPlaylistId;
         }
+        if (updates.spotifyId !== undefined) {
+            dbUpdates.spotify_id = updates.spotifyId;
+        }
+        if (updates.location) dbUpdates.location = updates.location;
+        if (updates.resolution) {
+            dbUpdates.width = updates.resolution.width;
+            dbUpdates.height = updates.resolution.height;
+        }
+        if (updates.orientation) dbUpdates.orientation = updates.orientation;
+        if (updates.size_inches) dbUpdates.size_inches = updates.size_inches;
 
         await supabase.from('tvs').update(dbUpdates).eq('id', id);
         await get().fetchData();
