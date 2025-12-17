@@ -13,6 +13,7 @@ export interface TV {
     displayMode: DisplayMode;
     assignedPlaylistId: string | null;
     size_inches?: number;
+    spotifyId?: string;
 }
 
 export type SlideType = 'image';

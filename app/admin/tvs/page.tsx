@@ -2,15 +2,16 @@
 
 import { useEffect, useState } from 'react';
 import { useStore } from '@/store/useStore';
-import { Plus, Trash2, Monitor, Settings2, PlayCircle, Smartphone, Check } from 'lucide-react';
+import { Plus, Trash2, Monitor, Settings2, PlayCircle, Smartphone, Check, Music, Pencil } from 'lucide-react'; // Added Pencil
 import { motion, AnimatePresence } from 'framer-motion';
 import { TV, Orientation } from '@/types';
 import GlassCard from '@/components/ui/GlassCard';
 import GlowButton from '@/components/ui/GlowButton';
 
 export default function TVManagementPage() {
-    const { tvs, playlists, addTV, removeTV, assignPlaylistToTV, fetchData } = useStore();
-    const [isAdding, setIsAdding] = useState(false);
+    const { tvs, playlists, addTV, updateTV, removeTV, assignPlaylistToTV, fetchData } = useStore();
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingTV, setEditingTV] = useState<TV | null>(null);
 
     useEffect(() => {
         fetchData();
@@ -22,6 +23,7 @@ export default function TVManagementPage() {
 
 
     const [newSizeInches, setNewSizeInches] = useState<number | undefined>(undefined);
+    const [newSpotifyId, setNewSpotifyId] = useState('');
     const [newOrientation, setNewOrientation] = useState<Orientation>('landscape');
 
     const calculateDimensions = (inches: number, orientation: Orientation) => {
@@ -42,26 +44,59 @@ export default function TVManagementPage() {
         }
     };
 
-    const handleAddTV = async (e: React.FormEvent) => {
+    const handleSaveTV = async (e: React.FormEvent) => {
         e.preventDefault();
 
         // Default to 55 if not provided (though input makes it required-ish)
         const inches = newSizeInches || 55;
         const dimensions = calculateDimensions(inches, newOrientation);
 
-        const newTV = {
-            name: newName,
-            location: newLocation,
+        if (editingTV) {
+            // Update Mode
+            await updateTV(editingTV.id, {
+                name: newName,
+                location: newLocation,
+                resolution: dimensions,
+                orientation: newOrientation,
+                size_inches: newSizeInches,
+                spotifyId: newSpotifyId
+            });
+        } else {
+            // Add Mode
+            const newTV = {
+                name: newName,
+                location: newLocation,
+                resolution: dimensions,
+                orientation: newOrientation,
+                assignedPlaylistId: null,
+                size_inches: newSizeInches,
+                spotifyId: newSpotifyId
+            };
+            await addTV(newTV);
+        }
 
-            resolution: dimensions,
-            orientation: newOrientation,
-
-            assignedPlaylistId: null,
-            size_inches: newSizeInches
-        };
-        await addTV(newTV);
-        setIsAdding(false);
+        setIsModalOpen(false);
         resetForm();
+    };
+
+    const handleEditClick = (tv: TV) => {
+        setEditingTV(tv);
+        setNewName(tv.name);
+        setNewLocation(tv.location);
+        setNewSizeInches(tv.size_inches);
+        setNewSpotifyId(tv.spotifyId || '');
+        setNewOrientation(tv.orientation);
+
+        // Pre-fill width/height if needed, but we calculate them from inches/orientation now
+        // so we just rely on state
+
+        setIsModalOpen(true);
+    };
+
+    const handleAddClick = () => {
+        resetForm();
+        setEditingTV(null);
+        setIsModalOpen(true);
     };
 
     const resetForm = () => {
@@ -69,6 +104,7 @@ export default function TVManagementPage() {
         setNewLocation('');
 
         setNewSizeInches(undefined);
+        setNewSpotifyId('');
         setNewOrientation('landscape');
     };
 
@@ -79,7 +115,7 @@ export default function TVManagementPage() {
                     <h2 className="text-4xl font-bold tracking-tight text-white">Displays</h2>
                     <p className="text-zinc-400 mt-2">Manage your physical screens.</p>
                 </div>
-                <GlowButton onClick={() => setIsAdding(true)} icon={Plus}>
+                <GlowButton onClick={handleAddClick} icon={Plus}>
                     Register Display
                 </GlowButton>
             </div>
@@ -110,14 +146,27 @@ export default function TVManagementPage() {
                                                     {tv.size_inches && (
                                                         <Badge>{tv.size_inches}"</Badge>
                                                     )}
+                                                    {tv.spotifyId && (
+                                                        <div className="bg-green-500/10 text-green-500 p-1 rounded-md" title="Spotify Enabled">
+                                                            <Music size={14} />
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
-                                            <button
-                                                onClick={() => removeTV(tv.id)}
-                                                className="p-2 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => handleEditClick(tv)}
+                                                    className="p-2 text-zinc-500 hover:text-white hover:bg-white/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                                                >
+                                                    <Pencil size={18} />
+                                                </button>
+                                                <button
+                                                    onClick={() => removeTV(tv.id)}
+                                                    className="p-2 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            </div>
                                         </div>
 
                                         <div className="flex gap-2 mb-4">
@@ -174,7 +223,7 @@ export default function TVManagementPage() {
 
             {/* Modal Overlay */}
             <AnimatePresence>
-                {isAdding && (
+                {isModalOpen && (
                     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95 }}
@@ -184,17 +233,19 @@ export default function TVManagementPage() {
                         >
                             <GlassCard>
                                 <div className="border-b border-white/10 pb-4 mb-6 flex justify-between items-center">
-                                    <h3 className="text-xl font-bold text-white">Register New TV</h3>
-                                    <button onClick={() => setIsAdding(false)} className="text-zinc-500 hover:text-white transition-colors">✕</button>
+                                    <h3 className="text-xl font-bold text-white">{editingTV ? 'Edit Display' : 'Register New TV'}</h3>
+                                    <button onClick={() => setIsModalOpen(false)} className="text-zinc-500 hover:text-white transition-colors">✕</button>
                                 </div>
 
-                                <form onSubmit={handleAddTV} className="space-y-4">
+                                <form onSubmit={handleSaveTV} className="space-y-4">
                                     <InputGroup label="Display Name" value={newName} onChange={setNewName} placeholder="Lobby Display" />
                                     <InputGroup label="Location" value={newLocation} onChange={setNewLocation} placeholder="Floor 1" />
 
 
 
                                     <InputGroup label="Size (Inches)" type="number" value={newSizeInches || ''} onChange={setNewSizeInches} placeholder="e.g. 55" />
+
+                                    <InputGroup label="Spotify Playlist ID" value={newSpotifyId} onChange={setNewSpotifyId} placeholder="e.g. 37i9dQZF1DXcBWIGoYBM5M" />
 
                                     <div>
                                         <label className="block text-xs font-medium text-zinc-400 mb-2 uppercase tracking-wide">Orientation</label>
@@ -218,8 +269,8 @@ export default function TVManagementPage() {
                                     </div>
 
                                     <div className="pt-4 flex gap-3">
-                                        <GlowButton type="button" variant="ghost" className="flex-1" onClick={() => setIsAdding(false)}>Cancel</GlowButton>
-                                        <GlowButton type="submit" className="flex-1">Register</GlowButton>
+                                        <GlowButton type="button" variant="ghost" className="flex-1" onClick={() => setIsModalOpen(false)}>Cancel</GlowButton>
+                                        <GlowButton type="submit" className="flex-1">{editingTV ? 'Save Changes' : 'Register'}</GlowButton>
                                     </div>
                                 </form>
                             </GlassCard>
