@@ -19,8 +19,9 @@ export default function TVManagementPage() {
     // Form State
     const [newName, setNewName] = useState('');
     const [newLocation, setNewLocation] = useState('');
-    const [newWidth, setNewWidth] = useState(1920);
-    const [newHeight, setNewHeight] = useState(1080);
+
+
+    const [newSizeInches, setNewSizeInches] = useState<number | undefined>(undefined);
     const [newOrientation, setNewOrientation] = useState<Orientation>('landscape');
 
     const handleAddTV = async (e: React.FormEvent) => {
@@ -28,9 +29,12 @@ export default function TVManagementPage() {
         const newTV = {
             name: newName,
             location: newLocation,
-            resolution: { width: newWidth, height: newHeight },
+
+            resolution: newOrientation === 'landscape' ? { width: 1920, height: 1080 } : { width: 1080, height: 1920 },
             orientation: newOrientation,
-            assignedPlaylistId: null
+
+            assignedPlaylistId: null,
+            size_inches: newSizeInches
         };
         await addTV(newTV);
         setIsAdding(false);
@@ -40,8 +44,8 @@ export default function TVManagementPage() {
     const resetForm = () => {
         setNewName('');
         setNewLocation('');
-        setNewWidth(1920);
-        setNewHeight(1080);
+
+        setNewSizeInches(undefined);
         setNewOrientation('landscape');
     };
 
@@ -78,7 +82,12 @@ export default function TVManagementPage() {
                                         <div className="flex justify-between items-start">
                                             <div>
                                                 <h3 className="font-bold text-xl text-white">{tv.name}</h3>
-                                                <p className="text-zinc-500 text-sm mb-3">{tv.location}</p>
+                                                <div className="flex items-center gap-2 mb-3">
+                                                    <p className="text-zinc-500 text-sm">{tv.location}</p>
+                                                    {tv.size_inches && (
+                                                        <Badge>{tv.size_inches}"</Badge>
+                                                    )}
+                                                </div>
                                             </div>
                                             <button
                                                 onClick={() => removeTV(tv.id)}
@@ -160,10 +169,9 @@ export default function TVManagementPage() {
                                     <InputGroup label="Display Name" value={newName} onChange={setNewName} placeholder="Lobby Display" />
                                     <InputGroup label="Location" value={newLocation} onChange={setNewLocation} placeholder="Floor 1" />
 
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <InputGroup label="Width" type="number" value={newWidth} onChange={setNewWidth} />
-                                        <InputGroup label="Height" type="number" value={newHeight} onChange={setNewHeight} />
-                                    </div>
+
+
+                                    <InputGroup label="Size (Inches)" type="number" value={newSizeInches || ''} onChange={setNewSizeInches} placeholder="e.g. 55" />
 
                                     <div>
                                         <label className="block text-xs font-medium text-zinc-400 mb-2 uppercase tracking-wide">Orientation</label>

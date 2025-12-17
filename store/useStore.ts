@@ -73,7 +73,8 @@ export const useStore = create<AppState>((set, get) => ({
             resolution: { width: tv.width, height: tv.height },
             orientation: tv.orientation,
             displayMode: tv.display_mode || 'playlist',
-            assignedPlaylistId: tv.assigned_playlist_id
+            assignedPlaylistId: tv.assigned_playlist_id,
+            size_inches: tv.size_inches
         }));
 
         const formattedTickets: Ticket[] = (ticketsReq.data || []).map((t: any) => ({ ...t }));
@@ -99,7 +100,8 @@ export const useStore = create<AppState>((set, get) => ({
             width: tv.resolution.width,
             height: tv.resolution.height,
             orientation: tv.orientation,
-            display_mode: 'playlist'
+            display_mode: 'playlist',
+            size_inches: tv.size_inches
         }).select();
 
         if (data && !error) await get().fetchData();

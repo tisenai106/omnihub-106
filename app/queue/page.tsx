@@ -1,14 +1,40 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useStore } from '@/store/useStore';
+import { supabase } from '@/lib/supabase';
 import { motion } from 'framer-motion';
-import { Ticket } from 'lucide-react';
+import { Ticket, Megaphone } from 'lucide-react'; // Added Megaphone notification icon
 
 export default function QueuePage() {
     const { createTicket } = useStore();
     const [myTicket, setMyTicket] = useState<string | null>(null);
+    const [isCalled, setIsCalled] = useState(false);
     const [loading, setLoading] = useState(false);
+
+    // Subscribe to Ticket Changes
+    useEffect(() => {
+        if (!myTicket) return;
+
+        const channel = supabase
+            .channel('my-ticket-updates')
+            .on(
+                'postgres_changes',
+                { event: 'UPDATE', schema: 'public', table: 'tickets' },
+                (payload: any) => {
+                    const newTicket = payload.new;
+                    if (newTicket.number === myTicket && newTicket.status === 'called') {
+                        setIsCalled(true);
+                        // Optional: Play sound here
+                    }
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [myTicket]);
 
     const handleGetTicket = async () => {
         setLoading(true);
@@ -82,6 +108,32 @@ export default function QueuePage() {
                                 Retirar outra senha
                             </button>
                         </div>
+
+                        {/* Calling Notification Overlay */}
+                        {isCalled && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 50 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="absolute inset-0 bg-red-600/90 backdrop-blur-md flex flex-col items-center justify-center text-center p-6 z-50 animate-pulse"
+                            >
+                                <Megaphone size={64} className="text-white mb-4 animate-bounce" />
+                                <h2 className="text-3xl font-black text-white uppercase tracking-tighter mb-2">
+                                    Sua vez!
+                                </h2>
+                                <p className="text-white/90 font-medium">
+                                    Dirija-se ao balcão de atendimento.
+                                </p>
+                                <button
+                                    onClick={() => {
+                                        setMyTicket(null);
+                                        setIsCalled(false);
+                                    }}
+                                    className="mt-8 bg-white text-red-600 px-6 py-3 rounded-xl font-bold hover:bg-zinc-100 transition-colors shadow-xl"
+                                >
+                                    Confirmar
+                                </button>
+                            </motion.div>
+                        )}
                     </motion.div>
                 )}
             </main>

@@ -12,6 +12,7 @@ export interface TV {
     orientation: Orientation;
     displayMode: DisplayMode;
     assignedPlaylistId: string | null;
+    size_inches?: number;
 }
 
 export type SlideType = 'image';
